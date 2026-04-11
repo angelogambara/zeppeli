@@ -1,0 +1,17 @@
+using:mattmc3/zephyr path:plugins
+
+completion
+compstyle
+editor
+environment
+history
+
+using:ohmyzsh/ohmyzsh path:plugins
+
+ohmyzsh/ohmyzsh path:lib/clipboard.zsh
+copybuffer
+copyfile
+copypath
+git
+git-commit
+git-extras
