@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 # Backup files and directories
 bak() {
   if [ "$#" -eq 0 ]; then
@@ -77,4 +77,56 @@ mvg() {
 # Make and go to the directory
 mkdirg() {
   mkdir -p -- "$1" && cd -- "$1" || return 1
+}
+
+# Manage files in 'lf' and preview with 'ueberzug'
+lf() {
+  # --- 1. SETUP: Temporary directory and file ---
+  temp_dir=${XDG_RUNTIME_DIR:-/tmp}
+
+  if [ ! -d "$temp_dir" ] || [ ! -w "$temp_dir" ]; then
+    echo >&2 "Error: Cannot write to temporary directory: $temp_dir"
+    return 1
+  fi
+
+  last_dir_file=$(mktemp "$temp_dir"/last_dir.XXXXXXXXXX)
+
+  # --- 2. SETUP: Ueberzug ---
+  if [ -z "$SSH_CLIENT" ]; then
+    export FIFO_UEBERZUG=$temp_dir/ueberzug-$$
+
+    mkfifo "$FIFO_UEBERZUG" || {
+      echo >&2 "Error: Cannot create Ueberzug FIFO: $FIFO_UEBERZUG"
+      return 1
+    }
+
+    # Fork ueberzug reading input from the FIFO
+    ueberzug layer -s -p json --no-opencv <"$FIFO_UEBERZUG" &
+    exec 3>"$FIFO_UEBERZUG"
+
+    # Ensure the cleanup function runs on any failure
+    trap ueberzug_cleanup HUP INT QUIT TERM EXIT
+
+    # --- 3. EXECUTION ---
+    lf -last-dir-path="$last_dir_file" "$@" 3>&-
+  else
+    lf -last-dir-path="$last_dir_file" "$@"
+  fi
+
+  # --- 4. FINALIZE: Change Directory ---
+  if [ -f "$last_dir_file" ]; then
+    target_dir=$(cat "$last_dir_file")
+    rm -f -- "$last_dir_file"
+
+    # If the target is a valid directory, cd into it
+    [ -d "$target_dir" ] && cd "$target_dir"/
+  fi
+}
+
+# Gracefully stop Ueberzug
+ueberzug_cleanup() {
+  # Close file descriptor
+  exec 3>&-
+  # Remove the named pipe
+  [ -e "$FIFO_UEBERZUG" ] && rm "$FIFO_UEBERZUG"
 }
