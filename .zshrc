@@ -4,17 +4,17 @@
 : "${XDG_DATA_HOME:=$HOME/.local/share}"
 : "${XDG_STATE_HOME:=$HOME/.local/state}"
 : "${XDG_CACHE_HOME:=$HOME/.cache}"
-: "${ZDOTDIR:=$XDG_CONFIG_DIR/zsh}"
+: "${XDG_RUNTIME_DIR:=/run/user/$UID}"
 
 for xdg in \
   XDG_CACHE_HOME XDG_CONFIG_HOME XDG_DATA_HOME \
-  XDG_STATE_HOME ZDOTDIR
+  XDG_STATE_HOME XDG_RUNTIME_DIR
 do
   export "$xdg"
-  mkdir -p "${(P)xdg}"
+  mkdir -p "${(P)xdg}"{/,/zsh}
 done
 
-HISTFILE=$XDG_DATA_HOME/zsh/zsh_history
+HISTFILE=$XDG_RUNTIME_DIR/zsh/zsh_history
 HISTSIZE=255
 SAVEHIST=65535
 setopt alwaystoend autolist automenu autoparamslash completeinword pathdirs
@@ -44,7 +44,7 @@ cdpath=(
 
 fpath=("$ZDOTDIR"/completions $fpath)
 
-export GOPATH=$HOME/go/bin
+export GOPATH=$XDG_DATA_HOME/go
 
 prepath=(
   $HOME/bin/statusbar(N)
@@ -53,7 +53,7 @@ prepath=(
   $HOME/.bin(N)
   $HOME/.local/bin/statusbar(N)
   $HOME/.local/bin(N)
-  $GOPATH(N)
+  $GOPATH/bin(N)
   $XDG_DATA_HOME/cargo/bin(N)
   $XDG_DATA_HOME/nvim/mason/bin(N)
 )
