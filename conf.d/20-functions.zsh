@@ -82,7 +82,8 @@ mkdirg() {
 # Manage files in 'lf' and preview with 'ueberzug'
 lf() {
   # --- 1. SETUP: Temporary directory and file ---
-  temp_dir=${XDG_RUNTIME_DIR:-/tmp}
+  temp_dir="${XDG_RUNTIME_DIR:-/tmp}/lf"
+  mkdir -p "$temp_dir"
 
   if [ ! -d "$temp_dir" ] || [ ! -w "$temp_dir" ]; then
     echo >&2 "Error: Cannot write to temporary directory: $temp_dir"
@@ -93,12 +94,10 @@ lf() {
 
   # --- 2. SETUP: Ueberzug ---
   if [ -z "$SSH_CLIENT" ]; then
-    export FIFO_UEBERZUG=$temp_dir/ueberzug-$$
+    FIFO_UEBERZUG=$(mktemp -u "$temp_dir/ueberzug-XXXXXXXX")
+    export FIFO_UEBERZUG
 
-    mkfifo "$FIFO_UEBERZUG" || {
-      echo >&2 "Error: Cannot create Ueberzug FIFO: $FIFO_UEBERZUG"
-      return 1
-    }
+    mkfifo "$FIFO_UEBERZUG" || return 1
 
     # Fork ueberzug reading input from the FIFO
     ueberzug layer -s -p json --no-opencv <"$FIFO_UEBERZUG" &
@@ -108,9 +107,9 @@ lf() {
     trap ueberzug_cleanup HUP INT QUIT TERM EXIT
 
     # --- 3. EXECUTION ---
-    lf -last-dir-path="$last_dir_file" "$@" 3>&-
+    command lf -last-dir-path="$last_dir_file" "$@" 3>&- && ueberzug_cleanup
   else
-    lf -last-dir-path="$last_dir_file" "$@"
+    command lf -last-dir-path="$last_dir_file" "$@"
   fi
 
   # --- 4. FINALIZE: Change Directory ---
@@ -123,10 +122,12 @@ lf() {
   fi
 }
 
-# Gracefully stop Ueberzug
+# Gracefully stop Ueberzugpp
 ueberzug_cleanup() {
   # Close file descriptor
-  exec 3>&-
+  exec 3>&- 2>/dev/null
   # Remove the named pipe
-  [ -e "$FIFO_UEBERZUG" ] && rm "$FIFO_UEBERZUG"
+  [ -e "$FIFO_UEBERZUG" ] && rm -f "$FIFO_UEBERZUG"
+  # Untrap the shell
+  trap - HUP INT QUIT TERM EXIT
 }
