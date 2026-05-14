@@ -38,8 +38,8 @@ export PAGER=less
 export MANPAGER="nvim +Man!"
 
 cdpath=(
-  $HOME/git/angelogambara
-  $HOME/git/angelogambara/dotfiles
+  $HOME/git/*/angelogambara
+  $HOME/git/*/angelogambara/dotfiles
 )
 
 fpath=("$ZDOTDIR"/completions $fpath)
