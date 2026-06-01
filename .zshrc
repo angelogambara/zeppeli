@@ -29,7 +29,7 @@ bindkey -v
 export LANG=en_US.UTF-8
 export LESS='-g -i -M -R -S -w -z-4'
 
-export BROWSER=com.brave.Browser
+export BROWSER=firefox
 export TERMINAL=st
 export EDITOR=nvim
 export VISUAL=nvim
@@ -47,15 +47,10 @@ fpath=("$ZDOTDIR"/completions $fpath)
 export GOPATH=$XDG_DATA_HOME/go
 
 prepath=(
-  $HOME/bin/statusbar(N)
-  $HOME/bin(N)
-  $HOME/.bin/statusbar(N)
-  $HOME/.bin(N)
   $HOME/.local/bin/statusbar(N)
+  $HOME/.local/bin/bwrap(N)
   $HOME/.local/bin(N)
   $GOPATH/bin(N)
-  $XDG_DATA_HOME/cargo/bin(N)
-  $XDG_DATA_HOME/nvim/mason/bin(N)
 )
 
 export GNUPGHOME=$HOME/.gnupg
